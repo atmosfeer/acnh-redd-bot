@@ -23,7 +23,7 @@ class App < Sinatra::Base
 
   bot.command :redd do |event|
     content = event.content
-    message = bot.send_message(720441425757470800, content)
+    message = bot.send_message(ENV['CHANNEL_ID'], content)
     ["1️⃣", "2️⃣", "3️⃣", "4️⃣"].each do |emoji|
       message.react emoji
     end
@@ -36,7 +36,7 @@ class App < Sinatra::Base
 
   bot.command :giveaway do |event|
     content = event.content
-    message = bot.send_message(720441425757470800, content)
+    message = bot.send_message(ENV['CHANNEL_ID'], content)
     message.react "1️⃣"
     message.react "2️⃣"
     message.react "3️⃣"
