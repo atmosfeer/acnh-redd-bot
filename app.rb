@@ -1,5 +1,4 @@
 require 'sinatra'
-require 'pry-byebug'
 require 'sinatra/activerecord'
 require 'discordrb'
 require 'discordrb/webhooks'
