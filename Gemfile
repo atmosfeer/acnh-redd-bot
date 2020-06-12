@@ -8,3 +8,6 @@ gem "sinatra-activerecord"
 gem "sqlite3"
 gem "rake"
 gem "discordrb"
+gem "pg"
+gem "dotenv"
+
