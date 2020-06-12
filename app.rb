@@ -214,7 +214,7 @@ class App < Sinatra::Base
     event.channel.delete_messages(99, strict = false)
   end
 
-  # bot.run
+  bot.run
 
   get '/' do
     'Monkey!'
