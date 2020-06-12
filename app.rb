@@ -1,7 +1,7 @@
 require 'sinatra'
-require 'sinatra/activerecord'
+# require 'sinatra/activerecord'
 require 'discordrb'
-require 'discordrb/webhooks'
+# require 'discordrb/webhooks'
 require 'dotenv/load'
 
 # require_relative 'models/art_piece'
