@@ -10,3 +10,6 @@ gem "discordrb"
 gem "pg"
 gem "dotenv"
 
+group :development do
+  gem 'pry-byebug'
+end
