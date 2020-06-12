@@ -13,7 +13,7 @@ require 'dotenv/load'
 
 EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
 
-class App < Sinatra::Base
+# class App < Sinatra::Base
   bot = Discordrb::Commands::CommandBot.new token: ENV['BOT_TOKEN'], prefix: "d!"
   # controller = BotController.new(bot)
 
@@ -211,5 +211,5 @@ class App < Sinatra::Base
   get '/' do
     'Monkey!'
   end
-end
+# end
 
