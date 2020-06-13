@@ -35,7 +35,7 @@ class Announcement < ActiveRecord::Base
   def build_inline_fields
     [
       { name: "Host‎‎‎‎", value: user.mention + " ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿ ", inline: true },
-      { name: "Available Art", value: self.art_pieces_queue + " ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿", inline: true },
+      { name: "Available Art", value: self.art_pieces_queue + " ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ﻿  ", inline: true },
       { name: "Art Queue", value: self.art_status, inline: true }
     ]
   end
