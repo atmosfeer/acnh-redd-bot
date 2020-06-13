@@ -30,7 +30,94 @@ class BotController
     nil
   end
 
-  def queue_command
+  def queue_command(event)
+    channel = @bot.channel(ENV['CHANNEL_ID'])
+    dodo = event.content.downcase.gsub("d!queue","").strip.match(/\w{5}/).to_s.upcase
+    event.message.delete
+    if dodo.empty?
+      @bot.send_message(event.channel.id, "", nil, { description: "Oops, I think your forgot the dodo code, or maybe you typed it wrong? Try again! Remember it's d!queue <dodo_code>. No brackets." , color: 0x12457E } )
+      return nil
+    end
+    user = User.find_by_discord_id(event.user.id)
+    announcement_message = Announcement.where(user: user).last
+    if announcement_message.dodo
+      claimed_art_pieces = announcement_message.art_pieces.where(status: "claimed")
+      user_ids = claimed_art_pieces.map(&:user).map(&:discord_id)
+      claimed_users = channel.users.select { |user| user_ids.any? { |id| id == user.id } }
+      claimed_users.each do |claimed_user|
+        claimed_user.pm("Sorry about the inconvenience. #{user.mention}'s island is back up. Here's the new dodo code: #{dodo}")
+      end
+      @bot.send_message(event.channel.id, "", nil, { description: "Dodo code updated!", color: 0x12457E } )
+    else
+      @bot.send_message(event.channel.id, "", nil, { description: "Gotcha! Your post is now active!", color: 0x12457E } )
+    end
+    announcement_message.dodo = dodo
+    announcement_message.save!
+    bot_message = channel.load_message(announcement_message.discord_id)
+    EMOJIS.first(announcement_message.art_pieces.count).each do |emoji|
+      bot_message.react emoji
+    end
+    nil
+  end
+
+  def buy_command(event)
+    channel = @bot.channel(ENV['CHANNEL_ID'])
+    user = User.find_by_discord_id(event.user.id)
+    bought_art = user.art_pieces.where(status: "claimed").first
+    bought_art.status = "bought"
+    bought_art.save!
+    user.in_queue = false
+    user.save!
+    announcement_message = bought_art.announcement
+    bot_message = channel.load_message(bought_art.announcement.discord_id)
+    bot_message.edit("", { description: announcement_message.original_message_no_art, fields: announcement_message.build_inline_fields })
+    @bot.send_message(event.channel.id, "", nil, { description: "Thank you for visiting my boat! The queue is now updated!", color: 0x12457E } )
+  end
+
+  def remove_command(event)
+    author = User.find_by_discord_id(event.user.id)
+    return "Sorry! You don't have an active post!" unless author.active_post
+    mentioned_user = event.message.mentions.first
+    user_to_remove = User.find_by_discord_id(mentioned_user.id)
+    return "The user you tried to remove is currently not in a queue." unless user_to_remove && user_to_remove.in_queue
+    announcement_message = author.announcements.last
+    return "The person you mentioned is not in your queue." unless author.can_remove?(user_to_remove)
+    channel = @bot.channel(ENV['CHANNEL_ID'])
+    user_to_remove.in_queue = false
+    user_to_remove.save!
+    reaction_to_remove = user_to_remove.reactions.where(announcement: announcement_message).first
+    bot_message = channel.load_message(announcement_message.discord_id)
+    bot_message.delete_reaction(user_to_remove.discord_id, EMOJIS[reaction_to_remove.number - 1])
+    art_piece = announcement_message.art_pieces.where(number: reaction_to_remove.number).first
+    art_piece.status = "open"
+    art_piece.save!
+    bot_message.edit("", { description: announcement_message.original_message_no_art, fields: announcement_message.build_inline_fields })
+    @bot.send_message(event.channel.id, "", nil, { description: "You succesfully removed #{user_to_remove.mention} from the queue!", color: 0x12457E } )
+    reaction_to_remove.destroy!
+    nil
+  end
+
+  def delete_command(event)
+    channel = @bot.channel(ENV['CHANNEL_ID'])
+    author = User.find_by_discord_id(event.user.id)
+    return "You don't have an active post to delete" unless author
+    return "You don't have an active post to delete" unless author.active_post
+    announcement_message = author.announcements.last
+    bot_message = channel.load_message(announcement_message.discord_id)
+    if bot_message
+      bot_message.delete
+    else
+      "Please contact a moderator, something went wrong!"
+    end
+    author.active_post = false
+    author.save!
+    if announcement_message.reactions
+      announcement_message.reactions.each do |reaction|
+        reaction.user.in_queue = false
+        reaction.user.save!
+      end
+    end
+    @bot.send_message(event.channel.id, "", nil, { description: "Post succesfully deleted!", color: 0x12457E } )
   end
 
   private
@@ -46,8 +133,8 @@ class BotController
         user = set_user(event)
         user.in_queue = false
         user.save!
-        art_piece = reacted_message.art_pieces.where(number: i + 1).first
         reacted_message = Announcement.find_by_discord_id(event.message.id)
+        art_piece = reacted_message.art_pieces.where(number: i + 1).first
         reaction = user.reactions.where(announcement: reacted_message).first
         reaction.destroy! unless art_piece.status == "bought"
         art_piece.update_status unless art_piece.status == "bought"
@@ -76,7 +163,7 @@ class BotController
           event.user.pm("Get ready pick up your art at #{reacted_message.user.mention}'s island! Dodo code is: #{reacted_message.dodo}")
         else
           bot_message.delete_reaction(user.discord_id, emoji)
-          event.user.pm("Sorry! You can't claim this!")
+          event.user.pm("Sorry! You can't claim this! If you don't know why, please ask a moderator!")
         end
       end
     end

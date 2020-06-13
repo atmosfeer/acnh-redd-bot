@@ -9,7 +9,7 @@ class Announcement < ActiveRecord::Base
   end
 
   def original_message_no_art
-    self.content.gsub("d!redd", "").gsub("Items:", "").split("\n").reject { |x| x.match /^\d/ }.join("\n")
+    self.content.gsub("d!new", "").gsub("Items:", "").split("\n").reject { |x| x.match /^\d/ }.join("\n")
   end
 
   def art_pieces_queue
