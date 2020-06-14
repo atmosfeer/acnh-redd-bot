@@ -50,6 +50,16 @@ class App < Sinatra::Base
       controller.delete_command(event)
     end
 
+    bot.command :purge do |event|
+      bot.channel(ENV['CHANNEL_ID']).prune(100)
+      Reaction.destroy_all
+      ArtPiece.destroy_all
+      Announcement.destroy_all
+      Channel.destroy_all
+      User.destroy_all
+      nil
+    end
+
     bot.command :template do |event|
       template = "Visitor: Redd\n"
       template += "Location: Secret beach\n"
