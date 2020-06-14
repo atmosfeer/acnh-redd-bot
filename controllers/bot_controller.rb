@@ -8,28 +8,28 @@ class BotController
   end
 
   def redd_command(event)
-      user = set_user(event)
-      # channel = Channel.find_by_discord_id(event.channel.id)
+    user = set_user(event)
+    # channel = Channel.find_by_discord_id(event.channel.id)
 
-      return "Sorry you already have an active post, delete that first with d!delete before creating a new one." if user.active_post
-      return "Hmm. Please check if your post matches the template in #art-announcements or type d!template" unless event.content.include?("1.")
-      return "Sorry you're in the queue for a different post, please finish that before you enter a queue!" if user.in_queue
+    return "Sorry you already have an active post, delete that first with d!delete before creating a new one." if user.active_post
+    return "Hmm. Please check if your post matches the template in #art-announcements or type d!template" unless event.content.include?("1.")
+    return "Sorry you're in the queue for a different post, please finish that before you enter a queue!" if user.in_queue
 
-      announcement_message = Announcement.create!(content: event.content, user: user)
-      user.active_post = true
-      user.save!
-      art_pieces = announcement_message.extract_art_pieces
-      art_pieces.each_with_index do |art,i|
-        ArtPiece.create!(name: art, number: i + 1, status: "open", announcement: announcement_message)
-      end
-      bot_message = @bot.send_message(ENV['CHANNEL_ID'], "", nil, { description: announcement_message.original_message_no_art, fields: announcement_message.build_inline_fields, color: 0x12457E } )
-      announcement_message.discord_id = bot_message.id
-      announcement_message.save!
-      add_edit_event_listener(bot_message)
+    announcement_message = Announcement.create!(content: event.content, user: user)
+    user.active_post = true
+    user.save!
+    art_pieces = announcement_message.extract_art_pieces
+    art_pieces.each_with_index do |art,i|
+      ArtPiece.create!(name: art, number: i + 1, status: "open", announcement: announcement_message)
+    end
+    bot_message = @bot.send_message(ENV['CHANNEL_ID'], "", nil, { description: announcement_message.original_message_no_art, fields: announcement_message.build_inline_fields, color: 0x12457E } )
+    announcement_message.discord_id = bot_message.id
+    announcement_message.save!
+    # add_edit_event_listener(bot_message)
 
 
-      @bot.send_message(event.channel.id, "", nil, { description: "Succesfully created! Check out #art-announcements. Use d!queue <dodo_code> to activate the post!", color: 0x12457E } )
-      nil
+    @bot.send_message(event.channel.id, "", nil, { description: "Succesfully created! Check out #art-announcements. Use d!queue <dodo_code> to activate the post!", color: 0x12457E } )
+    nil
   end
 
   def queue_command(event)
@@ -115,10 +115,10 @@ class BotController
   def delete_command(event)
     channel = set_channel
     author = set_user(event)
-    announcement_message = author.announcements.last
-    bot_message = channel.load_message(announcement_message.discord_id)
     # return "You don't have an active post to delete" unless author
     return "You don't have an active post to delete" unless author.active_post
+    bot_message = channel.load_message(announcement_message.discord_id)
+    announcement_message = author.announcements.last
     if bot_message
       bot_message.delete
       @bot.send_message(event.channel.id, "", nil, { description: "Post succesfully deleted!", color: 0x12457E } )
@@ -158,9 +158,6 @@ class BotController
   def remove_reaction_event_listener
     EMOJIS.each_with_index do |emoji, i|
       @bot.reaction_remove(attributes = { emoji: emoji }) do |event|
-        puts "-" * 40 + "\n\n"
-        puts "REACTION REMOVAL CALLED"
-        puts "-" * 40 + "\n\n"
         user = set_user(event)
         reacted_message = Announcement.find_by_discord_id(event.message.id)
         art_piece = reacted_message.art_pieces.where(number: i + 1).first
@@ -186,16 +183,8 @@ class BotController
         # f.write("user: #{user.discord_name} | event.message.id #{event.message.id} | bot_message_id #{bot_message.id} \n\n")
         user = set_user(event)
         reacted_message = Announcement.find_by_discord_id(event.message.id)
-
-        # reacted_message.art_pieces.each do |art_piece|
-        #   if art_piece.user == user
-        #     event.user.pm("You can't queue to your own post!")
-        #     event.message.delete_reaction(user.discord_id, emoji)
-        #   end
-        #   nil
-        # end
-
         art_piece = reacted_message.art_pieces.where(number: i + 1).first
+
         if user == reacted_message.user
           event.user.pm("You can't queue to your own post!")
           event.message.delete_reaction(user.discord_id, emoji)
@@ -208,9 +197,8 @@ class BotController
         elsif user.can_react?(art_piece)
           reaction = Reaction.create!(number: i + 1, announcement: reacted_message, user: user)
           art_piece.update_status
-
           event.message.edit("", { description: reacted_message.original_message_no_art, fields: reacted_message.build_inline_fields })
-          event.user.pm("Get ready to pick up #{art_piece.name} at #{reacted_message.user.mention}'s island! Dodo code is: #{reacted_message.dodo}")
+          event.user.pm("Get ready to pick up **#{art_piece.name.capitalize}** at #{reacted_message.user.mention}'s island! Dodo code is: #{reacted_message.dodo}")
           user.in_queue = true
           user.save!
         else
