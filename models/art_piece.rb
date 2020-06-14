@@ -3,7 +3,7 @@ class ArtPiece < ActiveRecord::Base
   belongs_to :user
 
   def reactions
-    announcement.reactions
+    announcement.reactions.where(number: number)
   end
 
   def update_status

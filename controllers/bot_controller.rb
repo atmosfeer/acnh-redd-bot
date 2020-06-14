@@ -153,17 +153,22 @@ class BotController
   def remove_reaction_event_listener
     EMOJIS.each_with_index do |emoji, i|
       @bot.reaction_remove(attributes = { emoji: emoji }) do |event|
+        puts "-" * 40 + "\n\n"
+        puts "REACTION REMOVAL CALLED"
+        puts "-" * 40 + "\n\n"
         user = set_user(event)
         reacted_message = Announcement.find_by_discord_id(event.message.id)
         art_piece = reacted_message.art_pieces.where(number: i + 1).first
-        reaction = user.reactions.where(announcement: reacted_message).first
-        if reaction
-          reaction.destroy! unless art_piece.status == "bought"
+        reaction = user.reactions.where(announcement: reacted_message, number: i + 1).first
+        if art_piece.status != "bought"
+          reaction.destroy! if reaction
+          art_piece.update_status
         end
-        art_piece.update_status unless art_piece.status == "bought"
+        if reacted_message.reactions.where(user: user).count == 0
+          user.in_queue = false
+          user.save!
+        end
         event.message.edit("", { description: reacted_message.original_message_no_art, fields: reacted_message.build_inline_fields })
-        user.in_queue = false
-        user.save!
       end
     end
   end
@@ -185,29 +190,23 @@ class BotController
         #   nil
         # end
 
+        art_piece = reacted_message.art_pieces.where(number: i + 1).first
         if user == reacted_message.user
           event.user.pm("You can't queue to your own post!")
           event.message.delete_reaction(user.discord_id, emoji)
-          next
-        end
-        if user.active_post
+        elsif user.active_post
           event.user.pm("Ooops! You have an active post so you can't join the queue. Delete your own post first before trying again.")
           event.message.delete_reaction(user.discord_id, emoji)
-          next
-        end
-        if user.in_queue
-          event.user.pm("Ooops! You're already in a another queue.")
+        elsif user.in_queue
+          event.user.pm("Ooops! You're already in a queue.")
           event.message.delete_reaction(user.discord_id, emoji)
-          next
-        end
-        art_piece = reacted_message.art_pieces.where(number: i + 1).first
-        if user.can_react?(art_piece)
+        elsif user.can_react?(art_piece)
           p "-------------------------"
           p "THIS CODE RUNS"
           p "-------------------------"
-          Reaction.create!(number: i + 1, announcement: reacted_message, user: user)
+          reaction = Reaction.create!(number: i + 1, announcement: reacted_message, user: user)
           art_piece.update_status
-          event.message.edit("", { description: reacted_message.original_message_no_art, fields: reacted_message.build_inline_fields })
+          event.message.edit("", description: reacted_message.original_message_no_art, fields: reacted_message.build_inline_fields)
           event.user.pm("Get ready pick up your art at #{reacted_message.user.mention}'s island! Dodo code is: #{reacted_message.dodo}")
           user.in_queue = true
           user.save!
