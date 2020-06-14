@@ -29,55 +29,21 @@ class BotController
 
 
       @bot.send_message(event.channel.id, "", nil, { description: "Succesfully created! Check out #art-announcements. Use d!queue <dodo_code> to activate the post!", color: 0x12457E } )
-      #### delete this before deployment  ####
-      queue_command(event)
-      ########################################
       nil
   end
 
   def queue_command(event)
-      channel = @bot.channel(ENV['CHANNEL_ID'])
-      ### Uncomment before deployment
-      # dodo = event.content.downcase.gsub("d!queue","").strip.match(/\w{5}/).to_s.upcase
-      # event.message.delete
-      # ###############################
-
-      ### Delete before deployment ######
-      dodo = ("A".."Z").to_a.shuffle[0..4].join
-      ###################################
-      if dodo.empty?
-        @bot.send_message(event.channel.id, "", nil, { description: "Oops, I think your forgot the dodo code, or maybe you typed it wrong? Try again! Remember it's d!queue <dodo_code>. No brackets." , color: 0x12457E } )
-        return nil
-      end
-      user = User.find_by_discord_id(event.user.id)
-      announcement_message = Announcement.where(user: user).last
-      if announcement_message.dodo
-        claimed_art_pieces = announcement_message.art_pieces.where(status: "claimed")
-        user_ids = claimed_art_pieces.map(&:user).map(&:discord_id)
-        claimed_users = channel.users.select { |user| user_ids.any? { |id| id == user.id } }
-        claimed_users.each do |claimed_user|
-          claimed_user.pm("Sorry about the inconvenience. #{user.mention}'s island is back up. Here's the new dodo code: #{dodo}")
-        end
-        @bot.send_message(event.channel.id, "", nil, { description: "Dodo code updated!", color: 0x12457E } )
-      else
-        @bot.send_message(event.channel.id, "", nil, { description: "Gotcha! Your post is now active!", color: 0x12457E } )
-      end
-      announcement_message.dodo = dodo
-      announcement_message.save!
-      bot_message = channel.load_message(announcement_message.discord_id)
-      EMOJIS.first(announcement_message.art_pieces.count).each do |emoji|
-        bot_message.react emoji
-      end
-      nil
-    end
+    channel = set_channel
     # Format the dodo code
     dodo = event.content.downcase.gsub("d!queue","").gsub("D!queue","").strip.match(/\w{5}/).to_s.upcase
     event.message.delete
     # If the user types in the wrong dodo
     if dodo.empty?
       @bot.send_message(event.channel.id, "", nil, { description: "Oops, I think your forgot to include the dodo, or maybe you typed it wrong? Try again! Remember it's d!queue <dodo_code>. No brackets." , color: 0x12457E } )
-      nil
+      return nil
     end
+    user = User.find_by_discord_id(event.user.id)
+    announcement_message = Announcement.where(user: user).last
     # If the dodo is provided, either add it to the db or update the current dodo
     if announcement_message.dodo
       claimed_art_pieces = announcement_message.art_pieces.where(status: "claimed")
@@ -210,13 +176,35 @@ class BotController
         # f.write("user: #{user.discord_name} | event.message.id #{event.message.id} | bot_message_id #{bot_message.id} \n\n")
         user = set_user(event)
         reacted_message = Announcement.find_by_discord_id(event.message.id)
+
+        # reacted_message.art_pieces.each do |art_piece|
+        #   if art_piece.user == user
+        #     event.user.pm("You can't queue to your own post!")
+        #     event.message.delete_reaction(user.discord_id, emoji)
+        #   end
+        #   nil
+        # end
+
+        if user == reacted_message.user
+          event.user.pm("You can't queue to your own post!")
+          event.message.delete_reaction(user.discord_id, emoji)
+          next
+        end
+        if user.active_post
+          event.user.pm("Ooops! You have an active post so you can't join the queue. Delete your own post first before trying again.")
+          event.message.delete_reaction(user.discord_id, emoji)
+          next
+        end
         if user.in_queue
           event.user.pm("Ooops! You're already in a another queue.")
           event.message.delete_reaction(user.discord_id, emoji)
-          return nil
+          next
         end
         art_piece = reacted_message.art_pieces.where(number: i + 1).first
         if user.can_react?(art_piece)
+          p "-------------------------"
+          p "THIS CODE RUNS"
+          p "-------------------------"
           Reaction.create!(number: i + 1, announcement: reacted_message, user: user)
           art_piece.update_status
           event.message.edit("", { description: reacted_message.original_message_no_art, fields: reacted_message.build_inline_fields })
