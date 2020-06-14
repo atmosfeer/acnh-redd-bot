@@ -15,9 +15,20 @@ require_relative 'controllers/bot_controller'
 EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
 
 class App < Sinatra::Base
-  begin
-    bot = Discordrb::Commands::CommandBot.new token: ENV['BOT_TOKEN'], prefix: "d!"
+    bot = Discordrb::Commands::CommandBot.new token: ENV['BOT_TOKEN'], prefix: ["d!", "D!"], help_command: false
+
     controller = BotController.new(bot)
+
+    bot.command :bot_status do |event|
+      event.message.delete
+      bot.game=("- Type d!help")
+      nil
+    end
+
+    bot.command :clear_channel do |event|
+      event.message.delete
+      controller.clear_channel(event)
+    end
 
     bot.command :new do |event|
       controller.redd_command(event)
@@ -110,7 +121,7 @@ class App < Sinatra::Base
       event.user.pm(art)
     end
 
-    bot.command :commands do |event|
+    bot.command :help do |event|
 
       help = "**d!template**\n"
       help += "Will send you a template to copy paste and fill in. Easy peasy!\n"
@@ -136,9 +147,5 @@ class App < Sinatra::Base
     get '/' do
       'Monkey!'
     end
-  rescue RestClient::NotFound
-    binding.pry
-    "h"
-  end
 end
 
