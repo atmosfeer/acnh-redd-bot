@@ -5,11 +5,11 @@ class Announcement < ActiveRecord::Base
   belongs_to :user
 
   def extract_art_pieces
-    self.content.split("\n").select { |x| x.match /^\d/ }.map { |x| x.sub(/\d\.\s*/, '') }
+    self.content.gsub("d!new", "").gsub("D!new", "").split("\n").select { |x| x.match /^\d/ }.map { |x| x.sub(/\d\.\s*/, '') }
   end
 
   def original_message_no_art
-    self.content.gsub("d!new", "").gsub("Items:", "").split("\n").reject { |x| x.match /^\d/ }.join("\n")
+    self.content.gsub("d!new", "").gsub("D!new", "").gsub("Items:", "").split("\n").reject { |x| x.match /^\d/ }.join("\n")
   end
 
   def art_pieces_queue

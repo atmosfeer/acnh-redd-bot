@@ -3,7 +3,8 @@ class User < ActiveRecord::Base
   has_many :art_pieces
   has_many :reactions
 
-  validates :discord_id, presence: true, uniqueness: true
+  validates :discord_id, presence: true
+  validates :discord_id, uniqueness: true
 
   def mention
     "<@#{self.discord_id}>"
