@@ -34,16 +34,21 @@ class BotController
 
   def queue_command(event)
     channel = set_channel
+    user = set_user(event)
+    announcement_message = Announcement.where(user: user).last
+    event.message.delete
+
+    if !user.active_post
+      @bot.send_message(event.channel.id, "", nil, { description: "Sorry! You don't have an active post." , color: 0x12457E } )
+      return nil
+    end
     # Format the dodo code
     dodo = event.content.downcase.gsub("d!queue","").gsub("D!queue","").strip.match(/\w{5}/).to_s.upcase
-    event.message.delete
     # If the user types in the wrong dodo
     if dodo.empty?
       @bot.send_message(event.channel.id, "", nil, { description: "Oops, I think your forgot to include the dodo, or maybe you typed it wrong? Try again! Remember it's d!queue <dodo_code>. No brackets." , color: 0x12457E } )
       return nil
     end
-    user = User.find_by_discord_id(event.user.id)
-    announcement_message = Announcement.where(user: user).last
     # If the dodo is provided, either add it to the db or update the current dodo
     if announcement_message.dodo
       claimed_art_pieces = announcement_message.art_pieces.where(status: "claimed")
@@ -201,13 +206,11 @@ class BotController
           event.user.pm("Ooops! You're already in a queue.")
           event.message.delete_reaction(user.discord_id, emoji)
         elsif user.can_react?(art_piece)
-          p "-------------------------"
-          p "THIS CODE RUNS"
-          p "-------------------------"
           reaction = Reaction.create!(number: i + 1, announcement: reacted_message, user: user)
           art_piece.update_status
-          event.message.edit("", description: reacted_message.original_message_no_art, fields: reacted_message.build_inline_fields)
-          event.user.pm("Get ready pick up your art at #{reacted_message.user.mention}'s island! Dodo code is: #{reacted_message.dodo}")
+
+          event.message.edit("", { description: reacted_message.original_message_no_art, fields: reacted_message.build_inline_fields })
+          event.user.pm("Get ready to pick up #{art_piece.name} at #{reacted_message.user.mention}'s island! Dodo code is: #{reacted_message.dodo}")
           user.in_queue = true
           user.save!
         else
