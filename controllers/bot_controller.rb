@@ -38,7 +38,7 @@ class BotController
     announcement_message = Announcement.where(user: user).last
     event.message.delete
 
-    if !user.active_post
+    if user && !user.active_post
       @bot.send_message(event.channel.id, "", nil, { description: "Sorry! You don't have an active post." , color: 0x12457E } )
       return nil
     end
@@ -73,7 +73,7 @@ class BotController
 
   def buy_command(event)
     channel = set_channel
-    user = User.find_by_discord_id(event.user.id)
+    user = set_user(event)
     if !user.in_queue
       @bot.send_message(event.channel.id, "", nil, { description: "Sorry! You haven't claimed any art that you can mark as bought.", color: 0x12457E } )
       nil
@@ -117,8 +117,8 @@ class BotController
     author = set_user(event)
     # return "You don't have an active post to delete" unless author
     return "You don't have an active post to delete" unless author.active_post
-    bot_message = channel.load_message(announcement_message.discord_id)
     announcement_message = author.announcements.last
+    bot_message = channel.load_message(announcement_message.discord_id)
     if bot_message
       bot_message.delete
       @bot.send_message(event.channel.id, "", nil, { description: "Post succesfully deleted!", color: 0x12457E } )

@@ -21,7 +21,7 @@ class App < Sinatra::Base
 
     bot.command :bot_status do |event|
       event.message.delete
-      bot.game=("- Type d!help")
+      bot.game=("Type d!help")
       nil
     end
 
@@ -51,7 +51,7 @@ class App < Sinatra::Base
     end
 
     bot.command :purge do |event|
-      bot.channel(ENV['CHANNEL_ID']).prune(100)
+      bot.channel(event.channel).prune(99)
       Reaction.destroy_all
       ArtPiece.destroy_all
       Announcement.destroy_all
@@ -61,11 +61,10 @@ class App < Sinatra::Base
     end
 
     bot.command :template do |event|
-      template = "Visitor: Redd\n"
-      template += "Location: Secret beach\n"
+      template = "d!new\n"
+      template += "Visitor: Redd\n"
       template += "Shops:\n"
       template += "Water:\n"
-      template += "Dodo: Queue\n"
       template += "Other:\n"
       template += "Items:\n"
       template += "1. <name_of_art_piece> (real/fake)\n"
@@ -132,7 +131,6 @@ class App < Sinatra::Base
     end
 
     bot.command :help do |event|
-
       help = "**d!template**\n"
       help += "Will send you a template to copy paste and fill in. Easy peasy!\n"
       help += "\n**d!new**\n"
@@ -140,13 +138,13 @@ class App < Sinatra::Base
       help += "\n**d!queue <dodo_code>**\n"
       help += "This will activate your queue, don't type the <>. You can use the same command to update the dodo code!\n"
       help += "\n**d!buy**\n"
-      help += "**Don't** leave the queue, use this command to let people know you bought the art piece! The queue will update.\n"
+      help += "**DON'T** leave the queue, use this command to let people know you bought the art piece! The queue will update itself\n"
       help += "\n**d!remove @mention**\n"
       help += "The host can use this command if someone doesn't show up\n"
       help += "\n**d!art**\n"
-      help += "Will send you a complete list of the art in the game, also a guide to know if your art is real or fake.\n"
+      help += "Will send you a complete list of the art in the game, also a guide to know if your art is real or fake\n"
       help += "\n**d!delete**\n"
-      help += "The host can close the queue at any time with this command.\n"
+      help += "The host can close the queue at any time with this command\n"
 
       bot.send_message(event.channel.id, "Useful commands when using Redd", nil, { description: help, color: 0x12457E } )
       nil
