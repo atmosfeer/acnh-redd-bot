@@ -7,8 +7,6 @@ class BotController
     remove_reaction_event_listener
   end
 
-  d!
-
   def redd_command(event)
     user = set_user(event)
     # channel = Channel.find_by_discord_id(event.channel.id)
