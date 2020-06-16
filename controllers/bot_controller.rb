@@ -7,12 +7,14 @@ class BotController
     remove_reaction_event_listener
   end
 
+  d!
+
   def redd_command(event)
     user = set_user(event)
     # channel = Channel.find_by_discord_id(event.channel.id)
 
-    return "Sorry you already have an active post, delete that first with d!delete before creating a new one." if user.active_post
-    return "Hmm. Please check if your post matches the template in #art-announcements or type d!template" unless event.content.include?("1.")
+    return "Sorry you already have an active post, delete that first with i!delete before creating a new one." if user.active_post
+    return "Hmm. Please check if your post matches the template in #art-announcements or type i!template" unless event.content.include?("1.")
     return "Sorry you're in the queue for a different post, please finish that before you enter a queue!" if user.in_queue
 
     announcement_message = Announcement.create!(content: event.content, user: user)
@@ -28,7 +30,7 @@ class BotController
     # add_edit_event_listener(bot_message)
 
 
-    @bot.send_message(event.channel.id, "", nil, { description: "Succesfully created! Check out #art-announcements. Use d!queue <dodo_code> to activate the post!", color: 0x12457E } )
+    @bot.send_message(event.channel.id, "", nil, { description: "Succesfully created! Check out #art-announcements. Use i!queue <dodo_code> to activate the post!", color: 0x12457E } )
     nil
   end
 
@@ -43,10 +45,10 @@ class BotController
       return nil
     end
     # Format the dodo code
-    dodo = event.content.downcase.gsub("d!queue","").gsub("D!queue","").strip.match(/\w{5}/).to_s.upcase
+    dodo = event.content.downcase.gsub("i!queue","").strip.match(/\w{5}/).to_s.upcase
     # If the user types in the wrong dodo
     if dodo.empty?
-      @bot.send_message(event.channel.id, "", nil, { description: "Oops, I think your forgot to include the dodo, or maybe you typed it wrong? Try again! Remember it's d!queue <dodo_code>. No brackets." , color: 0x12457E } )
+      @bot.send_message(event.channel.id, "", nil, { description: "Oops, I think your forgot to include the dodo, or maybe you typed it wrong? Try again! Remember it's i!queue <dodo_code>. No brackets." , color: 0x12457E } )
       return nil
     end
     # If the dodo is provided, either add it to the db or update the current dodo

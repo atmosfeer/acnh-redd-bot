@@ -15,13 +15,13 @@ require_relative 'controllers/bot_controller'
 EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
 
 class App < Sinatra::Base
-    bot = Discordrb::Commands::CommandBot.new token: ENV['BOT_TOKEN'], prefix: ["d!", "D!"], help_command: false
+    bot = Discordrb::Commands::CommandBot.new token: ENV['BOT_TOKEN'], prefix: ["i!", "I!"], help_command: false
 
     controller = BotController.new(bot)
 
     bot.command :bot_status do |event|
       event.message.delete
-      bot.game=("Type d!help")
+      bot.game=("Type i!help")
       nil
     end
 
@@ -61,7 +61,7 @@ class App < Sinatra::Base
     end
 
     bot.command :template do |event|
-      template = "d!new\n"
+      template = "i!new\n"
       template += "Visitor: Redd\n"
       template += "Shops:\n"
       template += "Water:\n"
@@ -131,19 +131,19 @@ class App < Sinatra::Base
     end
 
     bot.command :help do |event|
-      help = "**d!template**\n"
+      help = "**i!template**\n"
       help += "Will send you a template to copy paste and fill in. Easy peasy!\n"
-      help += "\n**d!new**\n"
+      help += "\n**i!new**\n"
       help += "Creates a new queue post. **Imporatant**: make sure you follow the right format\n"
-      help += "\n**d!queue <dodo_code>**\n"
+      help += "\n**i!queue <dodo_code>**\n"
       help += "This will activate your queue, don't type the <>. You can use the same command to update the dodo code!\n"
-      help += "\n**d!buy**\n"
+      help += "\n**i!buy**\n"
       help += "**DON'T** leave the queue, use this command to let people know you bought the art piece! The queue will update itself\n"
-      help += "\n**d!remove @mention**\n"
+      help += "\n**i!remove @mention**\n"
       help += "The host can use this command if someone doesn't show up\n"
-      help += "\n**d!art**\n"
+      help += "\n**i!art**\n"
       help += "Will send you a complete list of the art in the game, also a guide to know if your art is real or fake\n"
-      help += "\n**d!delete**\n"
+      help += "\n**i!delete**\n"
       help += "The host can close the queue at any time with this command\n"
 
       bot.send_message(event.channel.id, "Useful commands when using Redd", nil, { description: help, color: 0x12457E } )

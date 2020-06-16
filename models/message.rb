@@ -9,7 +9,7 @@ class Message < ActiveRecord::Base
   end
 
   def original_message_no_art
-    self.content.gsub("d!redd", "").split("\n").reject { |x| x.match /^\d/ }.join("\n")
+    self.content.gsub("i!new", "").gsub("I!new", "").split("\n").reject { |x| x.match /^\d/ }.join("\n")
   end
 
   def formatted_post(event)
