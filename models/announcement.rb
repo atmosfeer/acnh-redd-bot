@@ -1,5 +1,5 @@
 class Announcement < ActiveRecord::Base
-  has_many :reactions
+  has_many :reactions, dependent: :destroy
   has_many :art_pieces
   belongs_to :channel
   belongs_to :user

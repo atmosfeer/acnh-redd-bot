@@ -115,6 +115,7 @@ class BotController
   def delete_command(event)
     channel = set_channel
     author = set_user(event)
+
     # return "You don't have an active post to delete" unless author
     return "You don't have an active post to delete" unless author.active_post
     announcement_message = author.announcements.last
