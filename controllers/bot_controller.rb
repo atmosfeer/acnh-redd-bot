@@ -28,7 +28,7 @@ class BotController
     # add_edit_event_listener(bot_message)
 
 
-    @bot.send_message(event.channel.id, "", nil, { description: "Succesfully created! Check out #art-announcements. Use i!queue <dodo_code> to activate the post!", color: 0x12457E } )
+    @bot.send_message(event.channel.id, "", nil, { description: "Succesfully created! Use i!queue <dodo_code> to activate the post!", color: 0x12457E } )
     nil
   end
 
@@ -74,19 +74,21 @@ class BotController
   def buy_command(event)
     channel = set_channel
     user = set_user(event)
-    if !user.in_queue
+    if user.in_queue
+      bought_art = user.art_pieces.where(status: "claimed").first
+      bought_art.status = "bought"
+      bought_art.save!
+      user.in_queue = false
+      user.save!
+      announcement_message = bought_art.announcement
+      bot_message = channel.load_message(bought_art.announcement.discord_id)
+      bot_message.edit("", { description: announcement_message.original_message_no_art, fields: announcement_message.build_inline_fields })
+      @bot.send_message(event.channel.id, "", nil, { description: "Pleasure doin' business with you cousin!", color: 0x12457E } )
+      return nil
+    else
       @bot.send_message(event.channel.id, "", nil, { description: "Sorry! You haven't claimed any art that you can mark as bought.", color: 0x12457E } )
-      nil
+      return nil
     end
-    bought_art = user.art_pieces.where(status: "claimed").first
-    bought_art.status = "bought"
-    bought_art.save!
-    user.in_queue = false
-    user.save!
-    announcement_message = bought_art.announcement
-    bot_message = channel.load_message(bought_art.announcement.discord_id)
-    bot_message.edit("", { description: announcement_message.original_message_no_art, fields: announcement_message.build_inline_fields })
-    @bot.send_message(event.channel.id, "", nil, { description: "Pleasure doin' business with you cousin! I updated the queue as well, no need to do more, thanks!", color: 0x12457E } )
   end
 
   def remove_command(event)
