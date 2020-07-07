@@ -75,7 +75,7 @@ class BotController
     channel = set_channel
     user = set_user(event)
     if user.in_queue
-      bought_art = user.art_pieces.where(status: "claimed").first
+      bought_art = user.art_pieces.where(status: "claimed").last
       bought_art.status = "bought"
       bought_art.save!
       user.in_queue = false
@@ -90,6 +90,7 @@ class BotController
       return nil
     end
   end
+  730075519722192898
 
   def remove_command(event)
     author = User.find_by_discord_id(event.user.id)
